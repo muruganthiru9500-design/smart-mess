@@ -1,70 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>SmartMess Online</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-body{font-family:Arial; text-align:center; padding:15px; background:#f8fafc}
-.card{background:white; padding:20px; border-radius:16px; box-shadow:0 4px 12px #0001; margin:auto; max-width:400px}
-button{padding:14px 28px; margin:8px; border:none; border-radius:12px; font-weight:bold; cursor:pointer}
-.yes{background:#22c55e; color:white} .no{background:#ef4444; color:white}
-input{padding:12px; width:85%; border-radius:10px; border:1px solid #ddd}
-</style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Mess Voting</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}body{background:#f5f7fb;padding:16px}.card{max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,.08)}h1{text-align:center;color:#1a73e8}.sub{text-align:center;color:#666;font-size:14px;margin-bottom:20px}.meal{margin-bottom:18px;border:1px solid #eee;border-radius:12px;padding:12px}.opt{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;margin:6px 0;background:#f9fafb;cursor:pointer;border:1px solid #eee}.opt.selected{background:#e8f0fe;border-color:#1a73e8;font-weight:600}button{width:100%;padding:14px;background:#1a73e8;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;margin-top:10px}</style>
 </head>
 <body>
-<h1>🍛 SmartMess LIVE</h1>
 <div class="card">
-<h3 id="date"></h3>
-<h2 id="menuDisplay">Loading...</h2>
-<input id="roll" placeholder="Roll No e.g. 21CS001"><br><br>
-<button class="yes" onclick="vote('YES')">✅ WILL EAT</button>
-<button class="no" onclick="vote('NO')">❌ WILL SKIP</button>
-<h3 id="msg"></h3>
-<p>Live: Eating <span id="liveYes">0</span> | Skip <span id="liveNo">0</span></p>
+<h1>🍽️ Smart Mess</h1><p class="sub">Hostel Dinner Voting - Today</p>
+<div class="meal"><h3>Main Dish</h3><div id="main"></div></div>
+<div class="meal"><h3>Side Dish</h3><div id="side"></div></div>
+<div class="meal"><h3>Rice / Bread</h3><div id="rice"></div></div>
+<button id="voteBtn" onclick="submitVote()">Submit My Vote</button>
+<p id="status" style="text-align:center;margin-top:12px;color:green"></p>
 </div>
-<p><a href="admin.html">Admin →</a></p>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
-
-const firebaseConfig = {
-  // PASTE YOUR CONFIG HERE
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "123456",
-  appId: "1:123456:web:abc"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-let today = new Date().toISOString().split('T')[0];
-document.getElementById('date').innerText = today;
-
-// Load Menu
-onValue(ref(db, `menu/${today}`), (snap)=>{
-  document.getElementById('menuDisplay').innerText = snap.val() || "Rice, Sambar, Curd, Fry";
-});
-
-// Live Count
-onValue(ref(db, `votes/${today}`), (snap)=>{
-  let data = snap.val() || {};
-  let yes = Object.values(data).filter(v=>v=='YES').length;
-  let no = Object.values(data).filter(v=>v=='NO').length;
-  document.getElementById('liveYes').innerText = yes;
-  document.getElementById('liveNo').innerText = no;
-});
-
-window.vote = function(choice){
-  let roll = document.getElementById('roll').value.trim().toUpperCase();
-  if(!roll){ alert('Enter Roll No'); return; }
-  set(ref(db, `votes/${today}/${roll}`), choice);
-  document.getElementById('msg').innerText = roll + " voted " + choice + " ✓";
-}
+<script>
+const firebaseConfig={apiKey:"AIzaSyDr5KIf9nbjtdRuLf_lUGi1y-p0ZlKe0YM",authDomain:"smart-mess-df9e6.firebaseapp.com",projectId:"smart-mess-df9e6",storageBucket:"smart-mess-df9e6.firebasestorage.app",messagingSenderId:"839521192409",appId:"1:839521192409:web:1e7c21aaef6d98c81531c8",measurementId:"G-H8V58S0RNB"};
+firebase.initializeApp(firebaseConfig);const db=firebase.firestore();
+const menu={main:["Chicken Curry","Paneer Butter Masala","Egg Curry","Veg Kurma"],side:["Potato Fry","Cabbage Poriyal","Brinjal Fry","Dal Tadka"],rice:["White Rice","Jeera Rice","Chapati","Parotta"]};
+let selected={main:null,side:null,rice:null};
+function build(){for(let cat in menu){const div=document.getElementById(cat);div.innerHTML="";menu[cat].forEach(item=>{const d=document.createElement("div");d.className="opt";d.id=cat+"-"+item;d.innerHTML=`<span>${item}</span><span id="count-${item}" style="font-size:12px">0 votes</span>`;d.onclick=()=>{selected[cat]=item;document.querySelectorAll(`#${cat} .opt`).forEach(e=>e.classList.remove("selected"));d.classList.add("selected");};div.appendChild(d);});}}
+function listen(){db.collection("votes_today").onSnapshot(snap=>{let counts={};snap.forEach(doc=>{let d=doc.data();counts[d.item]=(counts[d.item]||0)+1;});for(let cat in menu)menu[cat].forEach(item=>{let el=document.getElementById("count-"+item);if(el)el.textContent=(counts[item]||0)+" votes";});});}
+function submitVote(){if(!selected.main||!selected.side||!selected.rice){alert("Select one from each!");return;}let pid=localStorage.getItem("voterId")||"voter_"+Date.now();localStorage.setItem("voterId",pid);document.getElementById("status").textContent="Submitting...";let batch=db.batch();["main","side","rice"].forEach(cat=>{batch.set(db.collection("votes_today").doc(pid+"_"+cat),{voterId:pid,category:cat,item:selected[cat],time:new Date().toISOString()});});batch.commit().then(()=>{document.getElementById("status").textContent="✅ Vote Submitted!";});}
+build();listen();
 </script>
 </body>
 </html>

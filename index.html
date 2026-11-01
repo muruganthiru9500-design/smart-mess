@@ -1,30 +1,108 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Smart Mess Voting</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<style>*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}body{background:#f5f7fb;padding:16px}.card{max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,.08)}h1{text-align:center;color:#1a73e8}.sub{text-align:center;color:#666;font-size:14px;margin-bottom:20px}.meal{margin-bottom:18px;border:1px solid #eee;border-radius:12px;padding:12px}.opt{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;margin:6px 0;background:#f9fafb;cursor:pointer;border:1px solid #eee}.opt.selected{background:#e8f0fe;border-color:#1a73e8;font-weight:600}button{width:100%;padding:14px;background:#1a73e8;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;margin-top:10px}</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{background:#f0f4f8;padding:16px}
+.card{max-width:520px;margin:0 auto;background:#fff;border-radius:20px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,0.08)}
+h2{text-align:center;color:#1a73e8;margin-bottom:12px}
+.section{margin:14px 0;padding:12px;background:#f8fafc;border-radius:12px}
+.section h3{font-size:14px;color:#333;margin-bottom:8px}
+.option{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;margin:6px 0;background:#fff;border:2px solid #e8eaf0;border-radius:10px;cursor:pointer}
+.option.selected{border-color:#1a73e8;background:#e8f0fe}
+.option input{margin-right:8px}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-weight:700;font-size:16px;cursor:pointer}
+.btn-skip{background:#fce4ec;border:2px dashed #e57373;color:#c62828;margin-bottom:14px}
+.btn-vote{background:#1a73e8;color:#fff;margin-top:12px}
+.btn-vote:disabled{opacity:0.5}
+.small{font-size:12px;color:#666;text-align:center;margin-top:10px}
+.live{margin-top:16px;padding:12px;background:#e6f4ea;border-radius:12px}
+.bar{height:8px;background:#1a73e8;border-radius:4px;margin-top:4px}
+</style>
 </head>
 <body>
-<div class="card">
-<h1>🍽️ Smart Mess</h1><p class="sub">Hostel Dinner Voting - Today</p>
-<div class="meal"><h3>Main Dish</h3><div id="main"></div></div>
-<div class="meal"><h3>Side Dish</h3><div id="side"></div></div>
-<div class="meal"><h3>Rice / Bread</h3><div id="rice"></div></div>
-<button id="voteBtn" onclick="submitVote()">Submit My Vote</button>
-<p id="status" style="text-align:center;margin-top:12px;color:green"></p>
+<div class="card" id="formCard">
+<button class="btn btn-skip" onclick="notEating()">🚫 I'm Not Eating Today - Skip</button>
+
+<h2>🍛 Today's Menu Vote</h2>
+<p class="small">Select 1 from each category</p>
+
+<div class="section">
+<h3>🍗 Main Dish</h3>
+<div class="option" onclick="selectOne(this,'main','Chicken Biryani')"><label><input type="radio" name="main" value="Chicken Biryani"> Chicken Biryani</label></div>
+<div class="option" onclick="selectOne(this,'main','Veg Fried Rice')"><label><input type="radio" name="main" value="Veg Fried Rice"> Veg Fried Rice</label></div>
+<div class="option" onclick="selectOne(this,'main','Paneer Butter Masala')"><label><input type="radio" name="main" value="Paneer Butter Masala"> Paneer Butter Masala</label></div>
+<div class="option" onclick="selectOne(this,'main','Chicken Curry')"><label><input type="radio" name="main" value="Chicken Curry"> Chicken Curry</label></div>
 </div>
+
+<div class="section">
+<h3>🥗 Side Dish</h3>
+<div class="option" onclick="selectOne(this,'side','Raita')"><label><input type="radio" name="side" value="Raita"> Raita</label></div>
+<div class="option" onclick="selectOne(this,'side','Papad')"><label><input type="radio" name="side" value="Papad"> Papad</label></div>
+<div class="option" onclick="selectOne(this,'side','Pickle')"><label><input type="radio" name="side" value="Pickle"> Pickle</label></div>
+</div>
+
+<div class="section">
+<h3>🍚 Rice / Bread</h3>
+<div class="option" onclick="selectOne(this,'rice','White Rice')"><label><input type="radio" name="rice" value="White Rice"> White Rice</label></div>
+<div class="option" onclick="selectOne(this,'rice','Chapati')"><label><input type="radio" name="rice" value="Chapati"> Chapati</label></div>
+<div class="option" onclick="selectOne(this,'rice','Parotta')"><label><input type="radio" name="rice" value="Parotta"> Parotta</label></div>
+</div>
+
+<button id="submitBtn" class="btn btn-vote" onclick="submitVote()">Submit My Vote</button>
+<p class="small" id="status"></p>
+<div id="liveResults" class="live" style="display:none"></div>
+</div>
+
 <script>
 const firebaseConfig={apiKey:"AIzaSyDr5KIf9nbjtdRuLf_lUGi1y-p0ZlKe0YM",authDomain:"smart-mess-df9e6.firebaseapp.com",projectId:"smart-mess-df9e6",storageBucket:"smart-mess-df9e6.firebasestorage.app",messagingSenderId:"839521192409",appId:"1:839521192409:web:1e7c21aaef6d98c81531c8",measurementId:"G-H8V58S0RNB"};
-firebase.initializeApp(firebaseConfig);const db=firebase.firestore();
-const menu={main:["Chicken Curry","Paneer Butter Masala","Egg Curry","Veg Kurma"],side:["Potato Fry","Cabbage Poriyal","Brinjal Fry","Dal Tadka"],rice:["White Rice","Jeera Rice","Chapati","Parotta"]};
-let selected={main:null,side:null,rice:null};
-function build(){for(let cat in menu){const div=document.getElementById(cat);div.innerHTML="";menu[cat].forEach(item=>{const d=document.createElement("div");d.className="opt";d.id=cat+"-"+item;d.innerHTML=`<span>${item}</span><span id="count-${item}" style="font-size:12px">0 votes</span>`;d.onclick=()=>{selected[cat]=item;document.querySelectorAll(`#${cat} .opt`).forEach(e=>e.classList.remove("selected"));d.classList.add("selected");};div.appendChild(d);});}}
-function listen(){db.collection("votes_today").onSnapshot(snap=>{let counts={};snap.forEach(doc=>{let d=doc.data();counts[d.item]=(counts[d.item]||0)+1;});for(let cat in menu)menu[cat].forEach(item=>{let el=document.getElementById("count-"+item);if(el)el.textContent=(counts[item]||0)+" votes";});});}
-function submitVote(){if(!selected.main||!selected.side||!selected.rice){alert("Select one from each!");return;}let pid=localStorage.getItem("voterId")||"voter_"+Date.now();localStorage.setItem("voterId",pid);document.getElementById("status").textContent="Submitting...";let batch=db.batch();["main","side","rice"].forEach(cat=>{batch.set(db.collection("votes_today").doc(pid+"_"+cat),{voterId:pid,category:cat,item:selected[cat],time:new Date().toISOString()});});batch.commit().then(()=>{document.getElementById("status").textContent="✅ Vote Submitted!";});}
-build();listen();
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+
+function selectOne(el,group,val){
+ document.querySelectorAll(`input[name="${group}"]`).forEach(r=>{
+   r.parentElement.parentElement.classList.remove("selected");
+ });
+ el.classList.add("selected");
+ el.querySelector("input").checked=true;
+}
+
+function submitVote(){
+ const main=document.querySelector('input[name="main"]:checked');
+ const side=document.querySelector('input[name="side"]:checked');
+ const rice=document.querySelector('input[name="rice"]:checked');
+ if(!main||!side||!rice){alert("Please select 1 Main + 1 Side + 1 Rice");return;}
+ const finalVote = `${main.value} + ${side.value} + ${rice.value}`;
+ const voterId = localStorage.getItem("voterId") || Math.random().toString(36).substr(2,9);
+ localStorage.setItem("voterId", voterId);
+ document.getElementById("status").textContent="Submitting...";
+ db.collection("votes_today").doc(voterId).set({
+   item: finalVote,
+   main: main.value, side: side.value, rice: rice.value,
+   voterId: voterId,
+   timestamp: firebase.firestore.FieldValue.serverTimestamp()
+ }).then(()=>{
+   document.getElementById("formCard").innerHTML = `<h2 style='text-align:center'>✅ Vote Submitted!</h2><p style='text-align:center;color:#333;margin-top:8px'>You voted: <b>${finalVote}</b></p><p class='small'>You can vote again to change (1 device = 1 vote)</p>`;
+ }).catch(e=>{document.getElementById("status").textContent="Error: "+e.message;});
+}
+
+function notEating(){
+ if(!confirm("Confirm: You are NOT eating today?")) return;
+ const voterId = localStorage.getItem("voterId") || Math.random().toString(36).substr(2,9);
+ localStorage.setItem("voterId", voterId);
+ db.collection("votes_today").doc(voterId).set({
+   item: "🚫 Not Eating",
+   voterId: voterId,
+   timestamp: firebase.firestore.FieldValue.serverTimestamp()
+ }).then(()=>{
+   document.getElementById("formCard").innerHTML = "<h2 style='text-align:center'>✅ Noted!</h2><p style='text-align:center;color:#666;margin-top:8px'>Your skip is recorded. Food will be reduced!</p>";
+ }).catch(e=>alert("Error: "+e.message));
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>SmartMess - Student Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: Arial; background: #f2f7f2; display: flex; justify-content: center; align-items: center; height: 100vh; }
+.card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); width: 90%; max-width: 350px; text-align: center; }
+h2 { color: #2e7d32; }
+input { width: 90%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; }
+button { width: 95%; padding: 12px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+button:hover { background: #1b5e20; }
+.error { color: red; font-size: 14px; display: none; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>SmartMess</h2>
+  <p>Student Login</p>
+  <input type="text" id="rollno" placeholder="Enter Roll Number (Ex: 21CS045)">
+  <p class="error" id="error">Please enter valid Roll Number</p>
+  <button onclick="login()">Login</button>
+</div>
+
+<script>
+function login() {
+  let roll = document.getElementById("rollno").value.trim();
+  let error = document.getElementById("error");
+
+  if(roll === "" || roll.length < 3){
+    error.style.display = "block";
+    return;
+  }
+  
+  // Save roll number for next page
+  localStorage.setItem("studentRoll", roll);
+  
+  // Go to dashboard / menu page
+  window.location.href = "dashboard.html"; 
+  // Change to your menu page name if different
+}
+</script>
+
+</body>
+</html>
